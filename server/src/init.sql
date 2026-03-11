@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS reports (
     reporter_user_id INT REFERENCES users(id) ON DELETE CASCADE,
     reported_user_id INT REFERENCES users(id) ON DELETE CASCADE,
     report_type VARCHAR(50) NOT NULL,
+	images TEXT[] DEFAULT '{}',
     description TEXT,
     status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'RESOLVED', 'DISMISSED')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
