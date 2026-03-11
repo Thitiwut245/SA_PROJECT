@@ -5,7 +5,7 @@ import { reportService } from '../services/reportService.js';
 export const createReport = async (req: AuthRequest, res: Response) => {
   try {
     const reporterId = req.user?.userId;
-    const { reportedUserId, reason, description } = req.body;
+    const { reportedUserId, reason, description, mediaUrl } = req.body;
 
     if (!reporterId) {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -19,7 +19,8 @@ export const createReport = async (req: AuthRequest, res: Response) => {
       reporterId,
       reportedUserId,
       reason,
-      description
+      description,
+      mediaUrl
     });
 
     res.status(201).json({ message: 'Report submitted successfully', report: newReport });

@@ -47,7 +47,7 @@ export const getMyProfile = async (req: AuthRequest, res: Response) => {
 export const updateProfile = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
-    let { display_name, bio, country, age, profile_images } = req.body;
+    let { display_name, bio, country, birth_date, profile_image_url } = req.body;
 
     // Detect Country via IP if missing or requested
     if (!country) {
@@ -59,7 +59,6 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
          country = 'Unknown';
       }
     }
-    const { display_name, bio, country, birth_date, profile_image_url } = req.body;
 
     await pool.query(`
       INSERT INTO profiles (user_id, display_name, bio, country, birth_date, profile_image_url)
@@ -96,7 +95,6 @@ export const updateMyGames = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Game interest added successfully' });
   } catch (err: any) {
-  } catch (erro) {
     if (err.code === '23505') return res.status(400).json({ message: 'Game already added' });
     console.error(err);
     res.status(500).json({ message: 'Error adding game' });

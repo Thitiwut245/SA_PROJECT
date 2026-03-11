@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import GameTag from '@/components/GameTag.vue'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+
+const profileId = computed(() => route.params.userId ? Number(route.params.userId) : null)
+const isOwnProfile = computed(() => !profileId.value || profileId.value === authStore.user?.id)
 
 // Profile data
 const displayName = ref('')
 const email = ref('')
 const bio = ref('')
-const birth_date = ref('') // อัปเดตตัวแปรเป็น birth_date
+const birth_date = ref('')
 const country = ref('')
 const avatarUrl = ref('')
 const profileImages = ref<string[]>([])
@@ -38,10 +42,12 @@ onMounted(async () => {
       { id: 6, game_name: 'Hayday' }
     ]
 
-    const profileRes = await api.get('/profile/').catch(() => ({ data: null }))
+    const endpoint = isOwnProfile.value ? '/profile' : `/profile/${profileId.value}`
+    const profileRes = await api.get(endpoint).catch(() => ({ data: null }))
+    
     if (profileRes.data) {
-      displayName.value = profileRes.data.display_name || profileRes.data.name || authStore.user?.name || ''
-      email.value = profileRes.data.email || authStore.user?.email || ''
+      displayName.value = profileRes.data.display_name || profileRes.data.name || ''
+      email.value = profileRes.data.email || ''
       bio.value = profileRes.data.bio || ''
       
       if (profileRes.data.birth_date) {
@@ -49,10 +55,15 @@ onMounted(async () => {
       }
       
       country.value = profileRes.data.country || ''
-      avatarUrl.value = profileRes.data.profile_image_url?.[0] || ''
-      profileImages.value = profileRes.data.profile_image_url || []
+      avatarUrl.value = Array.isArray(profileRes.data.profile_image_url) 
+        ? profileRes.data.profile_image_url[0] 
+        : profileRes.data.profile_image_url || ''
+      profileImages.value = Array.isArray(profileRes.data.profile_image_url)
+        ? profileRes.data.profile_image_url
+        : profileRes.data.profile_image_url ? [profileRes.data.profile_image_url] : []
 
       if (profileRes.data.games) {
+        selectedGames.value = profileRes.data.games.map((g: any) => g.id || g.game_id)
         const mappedGames = profileRes.data.games.map((g: any) => g.game_id || g.id)
         selectedGames.value = [...mappedGames]
         originalGames.value = [...mappedGames]
@@ -187,8 +198,19 @@ const cancelEdit = () => {
 
     <template v-if="!isEditing">
       <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold tracking-tight">Profile</h1>
+        <div class="flex items-center gap-3">
+          <button
+            @click="router.back()"
+            class="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 class="text-2xl font-bold tracking-tight">Profile</h1>
+        </div>
         <button
+          v-if="isOwnProfile"
           @click="handleLogout"
           id="profile-logout-button"
           class="px-4 py-2 text-sm text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/10 transition-colors cursor-pointer"
@@ -263,6 +285,7 @@ const cancelEdit = () => {
       </div>
 
       <button
+        v-if="isOwnProfile"
         @click="isEditing = true"
         id="edit-profile-button"
         class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-2xl shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer text-sm"

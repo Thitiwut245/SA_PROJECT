@@ -38,7 +38,7 @@ const handleKeepSwiping = () => {
       <div class="flex items-center justify-center gap-4 mb-10">
         <!-- Optional: Show current user's avatar ideally, but here just showing the matched user -->
         <div class="w-28 h-28 rounded-full border-4 border-emerald-400 shadow-[0_0_30px_rgba(52,211,153,0.4)] overflow-hidden">
-          <img :src="matchData.avatar || '/placeholder-avatar.png'" alt="Avatar" class="w-full h-full object-cover" />
+          <img :src="matchData.avatar || '/placeholder-avatar.png'" @error="(e: Event) => (e.target as HTMLImageElement).src = '/placeholder-avatar.png'" alt="Avatar" class="w-full h-full object-cover" />
         </div>
       </div>
 

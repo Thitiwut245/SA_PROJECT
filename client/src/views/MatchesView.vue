@@ -23,8 +23,17 @@ onMounted(async () => {
 <template>
   <div class="max-w-lg mx-auto w-full flex flex-col h-full">
     <!-- Header -->
-    <div class="px-5 pt-6 pb-4">
-      <h1 class="text-2xl font-bold text-white tracking-tight">Matched</h1>
+    <div class="px-5 pt-6 pb-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-white tracking-tight">Matches</h1>
+        <p class="text-xs text-gray-500 mt-0.5">{{ chatStore.matchesList.length }} connections</p>
+      </div>
+      <button
+        @click="router.push('/discover')"
+        class="px-4 py-1.5 bg-purple-600/20 border border-purple-500/30 rounded-xl text-purple-400 text-xs font-semibold hover:bg-purple-600/30 transition-colors cursor-pointer"
+      >
+        Find More
+      </button>
     </div>
 
     <!-- Empty State -->

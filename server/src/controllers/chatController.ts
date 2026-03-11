@@ -13,7 +13,7 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
     }
 
     const checkMatch = await pool.query(
-      'SELECT * FROM matches WHERE id = $1 AND (user_one_id = $2 OR user_two_id = $2)',
+      'SELECT * FROM matches WHERE id = $1 AND (user_one_id = $2 OR user_two_id = $2) AND is_active = true',
       [matchId, myId]
     );
 
@@ -48,7 +48,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     }
 
     const checkMatch = await pool.query(
-      'SELECT * FROM matches WHERE id = $1 AND (user_one_id = $2 OR user_two_id = $2)',
+      'SELECT * FROM matches WHERE id = $1 AND (user_one_id = $2 OR user_two_id = $2) AND is_active = true',
       [matchId, myId]
     );
 

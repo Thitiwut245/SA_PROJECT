@@ -48,7 +48,7 @@ export const banUser = async (req: AuthRequest, res: Response) => {
     );
 
     res.json({ message: 'User has been banned successfully' });
-  } catch (err) {
+  } catch (err: any) {
     if (err.code === '23505') return res.status(400).json({ message: 'User is already banned' });
     console.error(err);
     res.status(500).json({ message: 'Server error' });

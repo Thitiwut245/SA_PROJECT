@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { pool } from '../config/db.js';
 import { AuthRequest } from '../middleware/authMiddleware.js';
-import { io } from '../index.js';
+import { io, onlineUsers } from '../index.js';
 
 export const getCandidates = async (req: AuthRequest, res: Response) => {
   try {
@@ -30,6 +30,7 @@ export const getCandidates = async (req: AuthRequest, res: Response) => {
         SELECT user_id FROM user_game_interests 
         WHERE game_id IN (SELECT game_id FROM user_game_interests WHERE user_id = $1)
       )
+      AND p.country = (SELECT country FROM profiles WHERE user_id = $1)
       GROUP BY u.id, p.display_name, p.bio, p.birth_date, p.country, p.profile_image_url
       LIMIT 10;
     `, [myId]);
@@ -104,6 +105,9 @@ export const getMyMatches = async (req: AuthRequest, res: Response) => {
         u.id as partner_id,
         p.display_name as partner_name,
         p.profile_image_url as partner_images,
+        u.last_active_at,
+        m.matched_at,
+        (SELECT message_content FROM messages WHERE match_id = m.id ORDER BY sent_at DESC LIMIT 1) as last_message
         p.bio as partner_bio,
         p.birth_date as partner_birth_date,
         m.matched_at,
@@ -122,7 +126,12 @@ export const getMyMatches = async (req: AuthRequest, res: Response) => {
       ORDER BY m.matched_at DESC
     `, [myId]);
 
-    res.json(result.rows);
+    const matches = result.rows.map(row => ({
+      ...row,
+      is_online: onlineUsers.has(row.partner_id)
+    }));
+
+    res.json(matches);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });

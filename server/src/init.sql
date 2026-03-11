@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS users (
     is_suspended BOOLEAN DEFAULT FALSE,
     suspension_reason TEXT,
     suspension_until TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     last_active_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -48,7 +47,7 @@ CREATE TABLE IF NOT EXISTS swipes (
     id SERIAL PRIMARY KEY,
     requester_id INT REFERENCES users(id) ON DELETE CASCADE,
     target_id INT REFERENCES users(id) ON DELETE CASCADE,
-    status VARCHAR(10) CHECK (status IN ('LIKE', 'SKIP')), 
+    status VARCHAR(10) CHECK (status IN ('LIKE', 'SKIP')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -70,53 +69,43 @@ CREATE TABLE IF NOT EXISTS messages (
     message_type VARCHAR(20) DEFAULT 'TEXT',
     message_content TEXT NOT NULL,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    read_at TIMESTAMP 
+    read_at TIMESTAMP
 );
 
--- 8. สร้างตาราง User Bans 
+-- 8. สร้างตาราง User Bans
 CREATE TABLE IF NOT EXISTS user_bans (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
     admin_id INT REFERENCES users(id) ON DELETE SET NULL,
     reason TEXT NOT NULL,
     banned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP -- ถ้าเป็น NULL คือแบนถาวร
+    expires_at TIMESTAMP
 );
 
 -- 9. สร้างตาราง Reports
 CREATE TABLE IF NOT EXISTS reports (
     id SERIAL PRIMARY KEY,
-    reporter_user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    reporter_id INT REFERENCES users(id) ON DELETE CASCADE,
     reported_user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    reason VARCHAR(255) NOT NULL,
+    report_type VARCHAR(50),
     report_type VARCHAR(50) NOT NULL,
 	images TEXT[] DEFAULT '{}',
     description TEXT,
-    status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'RESOLVED', 'DISMISSED')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    media_url TEXT,
+    status VARCHAR(50) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'REVIEWING', 'RESOLVED', 'REJECTED', 'DISMISSED')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP
 );
 
--- 10. สร้างตาราง Admin Logs
-CREATE TABLE IF NOT EXISTS admin_logs (
-    id SERIAL PRIMARY KEY,
-    admin_id INT REFERENCES users(id) ON DELETE CASCADE,
-    action VARCHAR(100) NOT NULL, -- เช่น delete_profile, banned_user
-    target_id INT, -- เก็บ id ของคนที่โดนแบน หรือเกมที่ถูกเพิ่ม
-    reason TEXT,
-    admin_id INT REFERENCES users(id) ON DELETE SET NULL,
-    target_id INT, 
-    action VARCHAR(50) NOT NULL, 
-    details TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 9. สร้างตาราง Notifications
+-- 10. สร้างตาราง Notifications
 CREATE TABLE IF NOT EXISTS notifications (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
-    type VARCHAR(50) NOT NULL, -- MATCH_CREATED, NEW_MESSAGE, PROFILE_LIKED, REPORT_UPDATE, ACCOUNT_SUSPENDED
+    type VARCHAR(50) NOT NULL,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
-    entity_id INT, -- ID ของสิ่งที่เกี่ยวข้อง (เช่น match_id, user_id, message_id)
+    entity_id INT,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -124,29 +113,22 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(user_id, is_read);
 
--- 10. สร้างตาราง Reports
-CREATE TABLE IF NOT EXISTS reports (
+-- 11. สร้างตาราง Admin Logs
+CREATE TABLE IF NOT EXISTS admin_logs (
     id SERIAL PRIMARY KEY,
-    reporter_id INT REFERENCES users(id) ON DELETE CASCADE,
-    reported_user_id INT REFERENCES users(id) ON DELETE CASCADE,
-    reason VARCHAR(255) NOT NULL,
-    description TEXT,
-    status VARCHAR(50) DEFAULT 'PENDING', -- PENDING, REVIEWING, RESOLVED, REJECTED
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    resolved_at TIMESTAMP
+    admin_id INT REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(100) NOT NULL,
+    target_id INT,
+    reason TEXT,
+    details TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- ==========================================
--- Schema Migration for existing tables
--- ==========================================
-ALTER TABLE users ADD COLUMN IF NOT EXISTS is_suspended BOOLEAN DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS suspension_reason TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS suspension_until TIMESTAMP;
-ALTER TABLE admin_logs ADD COLUMN IF NOT EXISTS reason TEXT;
 
 -- ==========================================
 -- Insert Mock Data
 -- ==========================================
+INSERT INTO games (game_name, game_icon_url) VALUES
+('ROV', 'https://example.com/rov.png'),
 
 -- Insert Games
 INSERT INTO games (game_name, game_icon_url) VALUES 

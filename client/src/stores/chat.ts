@@ -21,6 +21,25 @@ export const useChatStore = defineStore('chat', {
         async fetchMatches() {
             try {
                 const res = await api.get('/swipe/matches')
+                this.matchesList = res.data.map((m: any) => {
+                    // Normalize partner_images: pg can return TEXT[] as string "{url1,url2}"
+                    let images = m.partner_images
+                    if (typeof images === 'string') {
+                        images = images.replace(/^\{|\}$/g, '').split(',').filter(Boolean)
+                    }
+                    if (!Array.isArray(images)) images = []
+
+                    return {
+                        id: m.match_id,
+                        target_id: m.partner_id,
+                        target_name: m.partner_name,
+                        target_avatar: images.length > 0 ? images[0] : '',
+                        is_online: m.is_online,
+                        last_active_at: m.last_active_at,
+                        lastMessage: m.last_message,
+                        matched_at: m.matched_at
+                    }
+                })
                 this.matchesList = res.data.map((m: any) => ({
                     id: m.match_id,
                     target_id: m.partner_id,
@@ -59,9 +78,25 @@ export const useChatStore = defineStore('chat', {
                 console.error('Failed to send message', err)
             }
         },
+        async unmatch(matchId: number) {
+            try {
+                await api.delete(`/swipe/unmatch/${matchId}`)
+                // Remove from local list
+                this.matchesList = this.matchesList.filter(m => m.id !== matchId)
+                if (this.activeMatchId === matchId) {
+                    this.activeMatchId = null
+                }
+            } catch (err) {
+                console.error('Failed to unmatch', err)
+                throw err
+            }
+        },
         receiveMessage(msg: ChatMessage) {
             if (msg.match_id === this.activeMatchId) {
-                this.messages.push(msg)
+                // Defensive check: don't push if ID already exists
+                if (!this.messages.find(m => m.id === msg.id)) {
+                    this.messages.push(msg)
+                }
             }
             // Also update latest message in matchesList
             const matchIndex = this.matchesList.findIndex((m: any) => m.id === msg.match_id)

@@ -8,13 +8,19 @@ const registerStore = useRegisterStore()
 
 const email = ref(registerStore.email || '')
 const password = ref(registerStore.password || '')
+const confirmPassword = ref('')
 const errorMsg = ref('')
 
 const handleNext = () => {
   errorMsg.value = ''
 
-  if (!email.value || !password.value) {
+  if (!email.value || !password.value || !confirmPassword.value) {
     errorMsg.value = 'Please fill in all fields.'
+    return
+  }
+
+  if (password.value !== confirmPassword.value) {
+    errorMsg.value = 'Passwords do not match.'
     return
   }
 
@@ -62,6 +68,17 @@ const handleNext = () => {
             minlength="6"
             class="w-full px-4 py-3.5 bg-[var(--color-input-bg)] border border-white/5 rounded-2xl outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all text-white placeholder-gray-500 text-sm"
             placeholder="Password"
+          />
+        </div>
+
+        <div>
+          <input 
+            v-model="confirmPassword"
+            id="register-confirm-password"
+            type="password"
+            required
+            class="w-full px-4 py-3.5 bg-[var(--color-input-bg)] border border-white/5 rounded-2xl outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all text-white placeholder-gray-500 text-sm"
+            placeholder="Confirm Password"
           />
         </div>
 

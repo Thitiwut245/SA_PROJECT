@@ -35,7 +35,11 @@ export const useAuthStore = defineStore('auth', {
             try {
                 // Backend: GET /api/profile/ returns the current user's profile
                 const res = await api.get('/profile/')
-                this.user = res.data.user || res.data
+                const userData = res.data.user || res.data
+                this.user = {
+                    ...userData,
+                    id: userData.id || userData.user_id
+                }
                 this.isAuthenticated = true
                 connectSocket(this.token!)
                 return true
